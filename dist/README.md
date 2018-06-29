@@ -1,0 +1,1 @@
+# https://x0a.github.io/stringtool/
