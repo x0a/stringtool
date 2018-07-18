@@ -31,8 +31,8 @@ class App extends Component {
     });
   }
 
-  radixChange(radix) {
-    this.setState({ radix: radix });
+  radixChange(radix, string) {
+    this.setState({ radix: radix, string: string });
   }
 
   calculate(string, stringArr) {
@@ -102,7 +102,7 @@ class StringEditor extends Component {
     if (event.target.name === "inputStr") {
       state.string = event.target.value;
     } else if (event.target.id === "type") {
-      this.changeRadix(~~event.target.value);
+      this.changeRadix(~~event.target.value, this.state.string);
     } else if (event.target.name === "delimeter") {
       return this.setDelimeter(event.target.value, this.state.regex);
     }
