@@ -33,7 +33,9 @@ class RadixConverter extends Component {
     } else if (this.radix === 16) {
       this.radixName = "Hexadecimal";
     }
+
     this.children = [];
+
     this.memoizeInputProp = memoizeOne((input) => {
       this.prevHover = -1;
       this.prevSelect = -1;
@@ -183,7 +185,7 @@ class RadixConverter extends Component {
       const UTF8 = this.radix === -1
       const radix = !UTF8 ? this.radix : 2;
       const input = !UTF8 ? this.state.input : this.state.input.join(" ").split(" ");
-
+      
       this.props.onEdit(radix, input);
     }
   }

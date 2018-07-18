@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import {
   Container, Row, Col,
   Button, InputGroup, Input,
@@ -14,13 +14,12 @@ class App extends Component {
 
     this.calculate = this.calculate.bind(this);
     this.edit = this.edit.bind(this);
+    this.radixChange = this.radixChange.bind(this);
 
     this.state = {
       string: "Enter a string here",
       stringArr: [],
-      radix: 0,
-      delimeter: "",
-      regex: false
+      radix: 0
     };
   }
 
@@ -30,6 +29,10 @@ class App extends Component {
       radix: radix,
       string: digits.join(radix === 0 ? "" : " "),
     });
+  }
+
+  radixChange(radix) {
+    this.setState({ radix: radix });
   }
 
   calculate(string, stringArr) {
@@ -49,6 +52,7 @@ class App extends Component {
               <StringEditor
                 input={this.state.string}
                 radix={this.state.radix}
+                radixChange={this.radixChange}
                 calculate={this.calculate}
               />
             </Col>
@@ -69,34 +73,36 @@ class App extends Component {
 class StringEditor extends Component {
   constructor(props) {
     super(props);
-    
+
     this.changeHandler = this.changeHandler.bind(this);
     this.convert = this.convert.bind(this);
 
+    this.changeRadix = props.radixChange;
     this.calculate = props.calculate;
     this.state = {
       string: props.input || "",
       radix: props.radix || 0,
-      delimeter: props.radix === 0 ? "" : " ",
+      delimeter: props.radix > 0 ? " " : "",
       regex: false
     };
   }
 
-  componentWillReceiveProps(nextProps){
+  componentWillReceiveProps(nextProps) {
     this.setDelimeter(nextProps.radix > 0 ? " " : "", this.state.regex);
+
     this.setState({
       string: nextProps.input,
       radix: nextProps.radix
     })
   }
+
   changeHandler(event) {
     let state = {};
 
     if (event.target.name === "inputStr") {
       state.string = event.target.value;
     } else if (event.target.id === "type") {
-      state.radix = ~~event.target.value;
-      this.setDelimeter(state.radix > 0 ? " " : "", this.state.regex);
+      this.changeRadix(~~event.target.value);
     } else if (event.target.name === "delimeter") {
       return this.setDelimeter(event.target.value, this.state.regex);
     }
@@ -141,6 +147,33 @@ class StringEditor extends Component {
     event.target.selectionEnd = event.target.value.length;
   }
 
+  getDelimeterEditor() {
+    if (this.state.radix > 0) {
+      let delimeterDisplay;
+      if(this.state.delimeter.length)
+        delimeterDisplay = <kbd className="delimeter">{this.state.delimeterDisplay}</kbd>;
+      return (<Fragment>
+        <Col lg="4" md="5" className="mb-1">
+          <InputGroup>
+            <InputGroupAddon addonType="prepend">Delimeter</InputGroupAddon>
+            <InputGroupAddon addonType="prepend">
+              <Button color="secondary" outline active={this.state.regex} onClick={() => {
+                this.setDelimeter(this.state.delimeter, !this.state.regex);
+                this.setState({ regex: !this.state.regex });
+              }}>
+                Regex
+              </Button>
+            </InputGroupAddon>
+            <Input placeholder="Delimeter" name="delimeter" value={this.state.delimeter} onChange={this.changeHandler} />
+          </InputGroup>
+        </Col>
+        <Col lg="4" md="3">
+          {delimeterDisplay}
+        </Col>
+      </Fragment>);
+    }
+  }
+
   render() {
     return <Card body className="text-right">
       <Row>
@@ -156,30 +189,18 @@ class StringEditor extends Component {
             </select>
           </InputGroup>
         </Col>
-        {(this.state.radix > 0 ?
-          [<Col lg="4" md="5" key="delimeterSet" className="mb-1">
-            <InputGroup>
-              <InputGroupAddon addonType="prepend">Delimeter</InputGroupAddon>
-              <InputGroupAddon addonType="prepend">
-                <Button color="secondary" outline active={this.state.regex} onClick={
-                  () => {
-                    this.setDelimeter(this.state.delimeter, !this.state.regex);
-                    this.setState({ regex: !this.state.regex });
-                  }
-                }>
-                  Regex
-              </Button>
-              </InputGroupAddon>
-              <Input placeholder="Delimeter" name="delimeter" value={this.state.delimeter} onChange={this.changeHandler} />
-            </InputGroup>
-          </Col>,
-          <Col lg="4" md="3" key="delimeterShow">
-            {this.state.delimeter.length ? <kbd className="delimeter">{this.state.delimeterDisplay}</kbd> : undefined}
-          </Col>]
-          : undefined)
-        }
+        {this.getDelimeterEditor()}
       </Row>
-      <textarea name="inputStr" className="form-control" placeholder="Enter a string here" onChange={this.changeHandler} value={this.state.string} onFocus={this.selectAll} autoFocus="true"></textarea>
+      <Input
+        name="inputStr"
+        type="textarea"
+        value={this.state.string}
+        spellCheck="false"
+        placeholder="Enter a string here"
+        onChange={this.changeHandler}
+        onFocus={this.selectAll}
+        autoFocus="true"
+      />
       <div>
         <span className="float-left length">Input length: <strong>{this.state.string.length}</strong></span>
         <Button className="float-right" color="primary" onClick={this.convert}>Convert</Button>
@@ -194,10 +215,12 @@ class RadixContainer extends Component {
     this.hover = this.hover.bind(this);
     this.select = this.select.bind(this);
     this.addRef = this.addRef.bind(this);
+
     this.onEdit = props.onEdit;
     this.bases = props.bases;
-    this.state = { stringArr: [] };
     this.instances = [];
+
+    this.state = { stringArr: [] };
   }
 
   componentWillReceiveProps(nextProps) {
@@ -207,15 +230,15 @@ class RadixContainer extends Component {
   }
 
   select(key) {
-    for (let inst of this.instances) {
+    for (let inst of this.instances)
       inst.setSelect(key);
-    }
+
   }
 
   hover(key) {
-    for (let inst of this.instances) {
+    for (let inst of this.instances)
       inst.setHover(key);
-    }
+
   }
 
   addRef(inst) {
@@ -224,15 +247,18 @@ class RadixContainer extends Component {
 
   render() {
     return <Col>
-      {this.bases.map(radix =>
-        <RadixConverter
-          ref={this.addRef}
-          radix={radix}
-          input={this.state.stringArr}
-          onSelect={this.select}
-          onHover={this.hover}
-          onEdit={this.onEdit} />
-      )}</Col>
+      {
+        this.bases.map(radix =>
+          <RadixConverter
+            key={radix}
+            ref={this.addRef}
+            radix={radix}
+            input={this.state.stringArr}
+            onSelect={this.select}
+            onHover={this.hover}
+            onEdit={this.onEdit} />)
+      }
+    </Col>
   }
 }
 

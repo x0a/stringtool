@@ -2,6 +2,7 @@
   "name": "stringtool",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://x0a.github.io/stringtool/",
   "dependencies": {
     "memoize-one": "^3.1.1",
     "react": "^16.4.1",
