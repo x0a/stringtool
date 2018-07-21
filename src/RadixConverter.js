@@ -91,6 +91,8 @@ class RadixConverter extends Component {
         else
           return "NaN";
       }
+
+      return "NaN";
     })
   }
   // lot of research and tinkering went into this shit.., for a performance gain of about 60%
