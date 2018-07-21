@@ -7,6 +7,7 @@ import {
 } from "reactstrap";
 import './App.css';
 import RadixConverter from "./RadixConverter.js";
+import memoizeOne from 'memoize-one';
 
 class App extends Component {
   constructor(props) {
@@ -14,7 +15,6 @@ class App extends Component {
 
     this.calculate = this.calculate.bind(this);
     this.edit = this.edit.bind(this);
-    this.radixChange = this.radixChange.bind(this);
 
     this.state = {
       string: "Enter a string here",
@@ -31,12 +31,8 @@ class App extends Component {
     });
   }
 
-  radixChange(radix, string) {
-    this.setState({ radix: radix, string: string });
-  }
-
   calculate(string, stringArr) {
-    this.setState({ string: string, stringArr: stringArr })
+    this.setState({ stringArr: stringArr })
   }
 
   render() {
@@ -52,7 +48,6 @@ class App extends Component {
               <StringEditor
                 input={this.state.string}
                 radix={this.state.radix}
-                radixChange={this.radixChange}
                 calculate={this.calculate}
               />
             </Col>
@@ -71,13 +66,17 @@ class App extends Component {
 }
 
 class StringEditor extends Component {
+  // This acts as an uncontrolled component.
+  // Does not send any changes up to the parent.
+  // And the parent does not control its contents.
+  // When the parent changes its props, this component accepts the changes.
+  // But does not attempt to keep its contents in sync with the parent, for performance reasons.
   constructor(props) {
     super(props);
 
     this.changeHandler = this.changeHandler.bind(this);
     this.convert = this.convert.bind(this);
 
-    this.changeRadix = props.radixChange;
     this.calculate = props.calculate;
     this.state = {
       string: props.input || "",
@@ -85,15 +84,17 @@ class StringEditor extends Component {
       delimeter: props.radix > 0 ? " " : "",
       regex: false
     };
+    this.updateRadix = memoizeOne(radix => this.setState({ radix: radix, delimeter: radix > 0 ? " " : "" }));
+    this.updateString = memoizeOne(string => this.setState({ string: string }));
+    this.getDelimeterEditor = memoizeOne(this.getDelimeterEditor)
+  }
+  componentDidMount() {
+    this.convert();
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setDelimeter(nextProps.radix > 0 ? " " : "", this.state.regex);
-
-    this.setState({
-      string: nextProps.input,
-      radix: nextProps.radix
-    })
+  componentWillReceiveProps(nextProps, prevProps) {
+    this.updateRadix(nextProps.radix);
+    this.updateString(nextProps.input);
   }
 
   changeHandler(event) {
@@ -102,32 +103,13 @@ class StringEditor extends Component {
     if (event.target.name === "inputStr") {
       state.string = event.target.value;
     } else if (event.target.id === "type") {
-      this.changeRadix(~~event.target.value, this.state.string);
+      state.radix = ~~event.target.value;
+      state.delimeter = state.radix > 0 ? " " : "";
     } else if (event.target.name === "delimeter") {
-      return this.setDelimeter(event.target.value, this.state.regex);
+      state.delimeter = event.target.value;
     }
 
     this.setState(state);
-  }
-
-  setDelimeter(delimeter, regex) {
-    let state = {
-      delimeter: delimeter
-    };
-
-    if (regex) {
-      state.delimeterDisplay = "/" + delimeter + "/g";
-    } else {
-      state.delimeterDisplay = delimeter.split("")
-        .map(char => "0x" + RadixConverter.convertBase(char.charCodeAt(0), 10, 16))
-        .join(" ")
-    }
-
-    this.setState(state);
-  }
-
-  componentDidMount() {
-    this.convert();
   }
 
   convert() {
@@ -147,24 +129,34 @@ class StringEditor extends Component {
     event.target.selectionEnd = event.target.value.length;
   }
 
-  getDelimeterEditor() {
-    if (this.state.radix > 0) {
+  getDelimeterEditor(radix, delimeter, regex) {
+    if (radix > 0) {
       let delimeterDisplay;
-      if(this.state.delimeter.length)
-        delimeterDisplay = <kbd className="delimeter">{this.state.delimeterDisplay}</kbd>;
+
+      if (delimeter.length) {
+        let delimeterText;
+        if (regex) {
+          delimeterText = "/" + delimeter + "/g";
+        } else {
+          delimeterText = delimeter.split("")
+            .map(char => "0x" + RadixConverter.convertBase(char.charCodeAt(0), 10, 16))
+            .join(" ")
+        }
+        delimeterDisplay = <kbd className="delimeter">{delimeterText}</kbd>;
+      }
+
       return (<Fragment>
         <Col lg="4" md="5" className="mb-1">
           <InputGroup>
             <InputGroupAddon addonType="prepend">Delimeter</InputGroupAddon>
             <InputGroupAddon addonType="prepend">
-              <Button color="secondary" outline active={this.state.regex} onClick={() => {
-                this.setDelimeter(this.state.delimeter, !this.state.regex);
-                this.setState({ regex: !this.state.regex });
+              <Button color="secondary" outline active={regex} onClick={() => {
+                this.setState({ regex: !regex });
               }}>
                 Regex
               </Button>
             </InputGroupAddon>
-            <Input placeholder="Delimeter" name="delimeter" value={this.state.delimeter} onChange={this.changeHandler} />
+            <Input placeholder="Delimeter" name="delimeter" value={delimeter} onChange={this.changeHandler} />
           </InputGroup>
         </Col>
         <Col lg="4" md="3">
@@ -189,7 +181,7 @@ class StringEditor extends Component {
             </select>
           </InputGroup>
         </Col>
-        {this.getDelimeterEditor()}
+        {this.getDelimeterEditor(this.state.radix, this.state.delimeter, this.state.regex)}
       </Row>
       <Input
         name="inputStr"
@@ -210,6 +202,13 @@ class StringEditor extends Component {
 }
 
 class RadixContainer extends Component {
+  // Takes the "push state up" concept, but rather than
+  // altering the state, we take the update (hover/select)
+  // and push it to its children. The children do not alter their state
+  // they alter their DOM children directly. 
+  // This avoids expensive re-rendering due to state change.
+  // Since our changes are CSS-only, we don't lose any functionality.
+
   constructor(props) {
     super(props);
     this.hover = this.hover.bind(this);
