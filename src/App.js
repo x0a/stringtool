@@ -66,7 +66,7 @@ class App extends Component {
 }
 
 class StringEditor extends Component {
-  // This acts as an uncontrolled component.
+  // This acts as an "uncontrolled" component.
   // Does not send any changes up to the parent.
   // And the parent does not control its contents.
   // When the parent changes its props, this component accepts the changes.
@@ -86,7 +86,7 @@ class StringEditor extends Component {
     };
     this.updateRadix = memoizeOne(radix => this.setState({ radix: radix, delimeter: radix > 0 ? " " : "" }));
     this.updateString = memoizeOne(string => this.setState({ string: string }));
-    this.getDelimeterEditor = memoizeOne(this.getDelimeterEditor)
+    this.getDelimeterEditor = memoizeOne(this.getDelimeterEditor) // wrap in memoizeOne to prevent expensive re-rendering
   }
   componentDidMount() {
     this.convert();
@@ -236,12 +236,12 @@ class RadixContainer extends Component {
 
   hover(key) {
     for (let inst of this.instances)
-      inst.setHover(key);
+      inst.setHover(key); // send the key to each child
 
   }
 
   addRef(inst) {
-    this.instances.push(inst);
+    this.instances.push(inst); // add each RadixConverter instance to our array
   }
 
   render() {
@@ -250,8 +250,8 @@ class RadixContainer extends Component {
         this.bases.map(radix =>
           <RadixConverter
             key={radix}
-            ref={this.addRef}
             radix={radix}
+            ref={this.addRef}
             input={this.state.stringArr}
             onSelect={this.select}
             onHover={this.hover}
