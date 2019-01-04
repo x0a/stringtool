@@ -1,6 +1,13 @@
 {
-  "main.css": "static/css/main.7cfcbb25.css",
-  "main.css.map": "static/css/main.7cfcbb25.css.map",
-  "main.js": "static/js/main.611f4b1d.js",
-  "main.js.map": "static/js/main.611f4b1d.js.map"
+  "main.css": "/stringtool/static/css/main.f01cc691.chunk.css",
+  "main.js": "/stringtool/static/js/main.44284138.chunk.js",
+  "main.js.map": "/stringtool/static/js/main.44284138.chunk.js.map",
+  "static/js/1.b6b5d96a.chunk.js": "/stringtool/static/js/1.b6b5d96a.chunk.js",
+  "static/js/1.b6b5d96a.chunk.js.map": "/stringtool/static/js/1.b6b5d96a.chunk.js.map",
+  "runtime~main.js": "/stringtool/static/js/runtime~main.7a947f7f.js",
+  "runtime~main.js.map": "/stringtool/static/js/runtime~main.7a947f7f.js.map",
+  "static/css/main.f01cc691.chunk.css.map": "/stringtool/static/css/main.f01cc691.chunk.css.map",
+  "index.html": "/stringtool/index.html",
+  "precache-manifest.08e32e4b0416a33a6ca43e6b2f3b749a.js": "/stringtool/precache-manifest.08e32e4b0416a33a6ca43e6b2f3b749a.js",
+  "service-worker.js": "/stringtool/service-worker.js"
 }
